@@ -355,7 +355,7 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int64_t* pFe
 
         if(!fProofOfStake) {
             
-            int payments = 1;
+            /*int payments = 1;
             CScript payeerewardaddress = CScript();
             int payeerewardpercent = 0;
 
@@ -418,10 +418,10 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int64_t* pFe
                 CCropCoincoinAddress address4(address3);
 
                 LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
-            }
+            }*/
 
             int64_t blockValue = GetProofOfWorkReward(pindexPrev->nHeight + 1, nFees);
-            int64_t masternodePayment = GetMasternodePayment(pindexPrev->nHeight+1, blockValue);
+            /*int64_t masternodePayment = GetMasternodePayment(pindexPrev->nHeight+1, blockValue);
 
             // Set output amount
             
@@ -436,7 +436,7 @@ CBlock* CreateNewBlock(CReserveKey& reservekey, bool fProofOfStake, int64_t* pFe
                 pblock->vtx[0].vout[2].nValue = rewardAmount;
                 pblock->vtx[0].vout[1].nValue = masternodePayment - rewardAmount;
                 blockValue -= masternodePayment;
-            }
+            }*/
 
             pblock->vtx[0].vout[0].nValue = blockValue;
             //pblocktemplate->vTxFees[0] = -nFees;

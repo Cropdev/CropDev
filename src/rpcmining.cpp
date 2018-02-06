@@ -95,24 +95,21 @@ Value getmininginfo(const Array& params, bool fHelp)
     //diff.push_back(Pair("proof-of-stake",       GetDifficulty(GetLastBlockIndex(pindexBest, true))));
     //diff.push_back(Pair("search-interval",      (int)nLastCoinStakeSearchInterval));
     obj.push_back(Pair("difficulty",    GetDifficulty(GetLastBlockIndex(pindexBest, true))));
-    //obj.push_back(Pair("blockvalue",    (int64_t)GetProofOfStakeReward(pindexBest->pprev, 0, 0)));
+    obj.push_back(Pair("blockvalue",    (int64_t)GetProofOfStakeReward(pindexBest->pprev, 0, 0)));
     obj.push_back(Pair("netmhashps",     GetPoWMHashPS()));
-    //obj.push_back(Pair("netstakeweight", GetPoSKernelPS()));
+    obj.push_back(Pair("netstakeweight", GetPoSKernelPS()));
     obj.push_back(Pair("errors",        GetWarnings("statusbar")));
     obj.push_back(Pair("pooledtx",      (uint64_t)mempool.size()));
-    //weight.push_back(Pair("minimum",    (uint64_t)nWeight));
-    //LogPrintf ("Mark108\n");
-    //weight.push_back(Pair("maximum",    (uint64_t)0));
-    //LogPrintf ("Mark109\n");
-    //weight.push_back(Pair("combined",  (uint64_t)nWeight));
-    //LogPrintf ("Mark110\n");
-    //obj.push_back(Pair("stakeweight", weight));
+    weight.push_back(Pair("minimum",    (uint64_t)nWeight));
+    weight.push_back(Pair("maximum",    (uint64_t)0));
+    weight.push_back(Pair("combined",  (uint64_t)nWeight));
+    obj.push_back(Pair("stakeweight", weight));
 
     //obj.push_back(Pair("testnet",       TestNet()));
     return obj;
 }
 
-/*Value getstakinginfo(const Array& params, bool fHelp)
+Value getstakinginfo(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
@@ -148,7 +145,7 @@ Value getmininginfo(const Array& params, bool fHelp)
     obj.push_back(Pair("expectedtime", nExpectedTime));
 
     return obj;
-}*/
+}
 
 Value checkkernel(const Array& params, bool fHelp)
 {
@@ -166,8 +163,8 @@ Value checkkernel(const Array& params, bool fHelp)
     if (vNodes.empty())
         throw JSONRPCError(-9, "CropCoin is not connected!");
 
-    //if (IsInitialBlockDownload())
-    //    throw JSONRPCError(-10, "CropCoin is downloading blocks...");
+    if (IsInitialBlockDownload())
+        throw JSONRPCError(-10, "CropCoin is downloading blocks...");
 
     COutPoint kernel;
     CBlockIndex* pindexPrev = pindexBest;
@@ -247,8 +244,8 @@ Value getworkex(const Array& params, bool fHelp)
     if (vNodes.empty())
         throw JSONRPCError(-9, "CropCoin is not connected!");
 
-    //if (IsInitialBlockDownload())
-    //    throw JSONRPCError(-10, "CropCoin is downloading blocks...");
+    if (IsInitialBlockDownload())
+        throw JSONRPCError(-10, "CropCoin is downloading blocks...");
 
     if (pindexBest->nHeight >= Params().LastPOWBlock())
         throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks");
@@ -381,8 +378,8 @@ Value getwork(const Array& params, bool fHelp)
     if (vNodes.empty())
         throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "CropCoin is not connected!");
 
-    //if (IsInitialBlockDownload())
-    //    throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "CropCoin is downloading blocks...");
+    if (IsInitialBlockDownload())
+        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "CropCoin is downloading blocks...");
 
     if (pindexBest->nHeight >= Params().LastPOWBlock())
         throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks");
@@ -547,8 +544,8 @@ Value getblocktemplate(const Array& params, bool fHelp)
     if (vNodes.empty())
         throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "CropCoin is not connected!");
 
-    //if (IsInitialBlockDownload())
-    //    throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "CropCoin is downloading blocks...");
+    if (IsInitialBlockDownload())
+        throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "CropCoin is downloading blocks...");
 
     if (pindexBest->nHeight >= Params().LastPOWBlock())
         throw JSONRPCError(RPC_MISC_ERROR, "No more PoW blocks");

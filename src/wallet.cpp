@@ -3527,8 +3527,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
                 payeerewardaddress = winningNode->rewardAddress;
                 payeerewardpercent = winningNode->rewardPercentage;
             } else {
-                LogPrintf("CreateCoinStake: Failed to detect masternode to pay\n");
-                hasPayment = false;
+                return error("CreateCoinStake: Failed to detect masternode to pay\n");
             }
         }
     }
@@ -3616,15 +3615,6 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         blockValue -= masternodePayment;
         txNew.vout[1].nValue = blockValue;
     }
-    else if (!hasPayment && txNew.vout.size() == 3) // 2 stake outputs, stake was split, no masternode payment
-    {
-        txNew.vout[1].nValue = (blockValue / 2 / CENT) * CENT;
-        txNew.vout[2].nValue = blockValue - txNew.vout[1].nValue;
-    }
-    else if(!hasPayment && txNew.vout.size() == 2) // only 1 stake output, was not split, no masternode payment
-        txNew.vout[1].nValue = blockValue;
-    
-    
     // Sign
     int nIn = 0;
     BOOST_FOREACH(const CWalletTx* pcoin, vwtxPrev)

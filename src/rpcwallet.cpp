@@ -30,8 +30,8 @@ static void accountingDeprecationCheck()
             "It can easily result in negative or odd balances if misused or misunderstood, which has happened in the field.\n"
             "If you still want to enable it, add to your config file enableaccounts=1\n");
 
-//    if (GetBoolArg("-staking", true))
-//        throw runtime_error("If you want to use accounting API, staking must be disabled, add to your config file staking=0\n");
+    if (GetBoolArg("-staking", true))
+        throw runtime_error("If you want to use accounting API, staking must be disabled, add to your config file staking=0\n");
 }
 
 std::string HelpRequiringPassphrase()
