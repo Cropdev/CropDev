@@ -1361,7 +1361,7 @@ int64_t GetProofOfWorkReward(int nHeight, int64_t nFees)
         nSubsidy = 2000000 * COIN;
     } else if (nHeight > 1 && nHeight <= 4000) {
         nSubsidy = 20 * COIN;
-    } else {
+    } else if (nHeight > 40000 && nHeight <= 20000) {
         nSubsidy = 15 * COIN;
     }
     
@@ -1371,7 +1371,20 @@ int64_t GetProofOfWorkReward(int nHeight, int64_t nFees)
 // miner's coin stake reward
 int64_t GetProofOfStakeReward(const CBlockIndex* pindexPrev, int64_t nCoinAge, int64_t nFees)
 {
-    int64_t nSubsidy = STATIC_POS_REWARD;
+    int64_t nSubsidy = 0 * COIN;
+    
+    if (pindexBest->nHeight+1 > 1 && pindexBest->nHeight+1 <= 20000) {
+        nSubsidy = 25 * COIN;
+    }
+    else if (pindexBest->nHeight+1 > 20000 && pindexBest->nHeight+1 <= 540000)
+    {
+        nSubsidy = 120 * COIN;
+    }
+    else if (pindexBest->nHeight+1 > 540000)    
+    {
+        nSubsidy = 20 * COIN;
+    }
+    
     return nSubsidy + nFees;
 }
 
@@ -4477,6 +4490,12 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
 int64_t GetMasternodePayment(int nHeight, int64_t blockValue)
 {
     int64_t ret = blockValue * 4/5;
+
+    if (nHeight > 20000 && nHeight <= 540000) {
+        ret = blockValue * 5/6;
+    } else if (nHeight > 540000) {
+        ret = blockValue * 13/20;
+    }
 
     return ret;
 }
