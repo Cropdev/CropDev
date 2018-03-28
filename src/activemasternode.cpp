@@ -206,10 +206,12 @@ bool CActiveMasternode::Dseep(CTxIn vin, CService service, CKey keyMasternode, C
     CMasternode* pmn = mnodeman.Find(vin);
     if(pmn != NULL)
     {
-        if(stop)
+        if(stop) {
             mnodeman.Remove(pmn->vin);
-        else
+        }
+        else{
             pmn->UpdateLastSeen();
+        }
     } else {
     	// Seems like we are trying to send a ping while the masternode is not registered in the network
     	retErrorMessage = "Darksend Masternode List doesn't include our masternode, Shutting down masternode pinging service! " + vin.ToString();
@@ -438,7 +440,7 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternode()
     // Filter
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        if(out.tx->vout[out.i].nValue == GetMNCollateral(pindexBest->nHeight)*COIN) { //exactly
+        if (IsMNCollateralValid(out.tx->vout[out.i].nValue, pindexBest->nHeight)) {
         	filteredCoins.push_back(out);
         }
     }
@@ -460,7 +462,7 @@ vector<COutput> CActiveMasternode::SelectCoinsMasternodeForPubKey(std::string co
     // Filter
     BOOST_FOREACH(const COutput& out, vCoins)
     {
-        if(out.tx->vout[out.i].scriptPubKey == scriptPubKey && out.tx->vout[out.i].nValue == GetMNCollateral(pindexBest->nHeight)*COIN) { //exactly
+        if(out.tx->vout[out.i].scriptPubKey == scriptPubKey && IsMNCollateralValid(out.tx->vout[out.i].nValue, pindexBest->nHeight)) { //exactly
         	filteredCoins.push_back(out);
         }
     }
@@ -473,6 +475,7 @@ bool CActiveMasternode::EnableHotColdMasterNode(CTxIn& newVin, CService& newServ
     if(!fMasterNode) return false;
 
     status = MASTERNODE_REMOTELY_ENABLED;
+    notCapableReason = "Successfully started masternode.";
 
     //The values below are needed for signing dseep messages going forward
     this->vin = newVin;

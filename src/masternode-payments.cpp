@@ -42,6 +42,7 @@ void ProcessMessageMasternodePayments(CNode* pfrom, std::string& strCommand, CDa
 
         LOCK(cs_masternodepayments);
 
+        LogPrintf("MasternodePayments: declare winner");
         //this is required in litemode
         CMasternodePaymentWinner winner;
         vRecv >> winner;
@@ -88,6 +89,7 @@ void ProcessMessageMasternodePayments(CNode* pfrom, std::string& strCommand, CDa
 
 bool CMasternodePayments::CheckSignature(CMasternodePaymentWinner& winner)
 {
+    LogPrintf("MasternodePayments: check signature");
     //note: need to investigate why this is failing
     std::string strMessage = winner.vin.ToString().c_str() + boost::lexical_cast<std::string>(winner.nBlockHeight) + winner.payee.ToString();
     std::string strPubKey = strMainPubKey ;
@@ -135,9 +137,9 @@ uint64_t CMasternodePayments::CalculateScore(uint256 blockHash, CTxIn& vin)
     uint256 n3 = Hash(BEGIN(vin.prevout.hash), END(vin.prevout.hash));
     uint256 n4 = n3 > n2 ? (n3 - n2) : (n2 - n3);
 
-    //printf(" -- CMasternodePayments CalculateScore() n2 = %d \n", n2.Get64());
-    //printf(" -- CMasternodePayments CalculateScore() n3 = %d \n", n3.Get64());
-    //printf(" -- CMasternodePayments CalculateScore() n4 = %d \n", n4.Get64());
+//    printf(" -- CMasternodePayments CalculateScore() n2 = %d \n", n2.Get64());
+//    printf(" -- CMasternodePayments CalculateScore() n3 = %d \n", n3.Get64());
+//    printf(" -- CMasternodePayments CalculateScore() n4 = %d \n", n4.Get64());
 
     return n4.Get64();
 }

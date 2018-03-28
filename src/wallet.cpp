@@ -1645,11 +1645,11 @@ void CWallet::AvailableCoins(vector<COutput>& vCoins, bool fOnlyConfirmed, const
                 if(coin_type == ONLY_DENOMINATED) {
                     found = IsDenominatedAmount(pcoin->vout[i].nValue);
                 } else if(coin_type == ONLY_NOT10000IFMN) {
-                    found = !(fMasterNode && pcoin->vout[i].nValue == GetMNCollateral(pindexBest->nHeight)*COIN);
+                    found = !(fMasterNode && IsMNCollateralValid(pcoin->vout[i].nValue, pindexBest->nHeight));
                 } else if (coin_type == ONLY_NONDENOMINATED_NOT10000IFMN){
                     if (IsCollateralAmount(pcoin->vout[i].nValue)) continue; // do not use collateral amounts
                     found = !IsDenominatedAmount(pcoin->vout[i].nValue);
-                    if(found && fMasterNode) found = pcoin->vout[i].nValue != GetMNCollateral(pindexBest->nHeight)*COIN; // do not use Hot MN funds
+                    if(found && fMasterNode) found = !IsMNCollateralValid(pcoin->vout[i].nValue, pindexBest->nHeight); // do not use Hot MN funds
                 } else {
                     found = true;
                 }
@@ -1702,11 +1702,11 @@ void CWallet::AvailableCoinsMN(vector<COutput>& vCoins, bool fOnlyConfirmed, con
                 if(coin_type == ONLY_DENOMINATED) {
                     found = IsDenominatedAmount(pcoin->vout[i].nValue);
                 } else if(coin_type == ONLY_NOT10000IFMN) {
-                    found = !(fMasterNode && pcoin->vout[i].nValue == GetMNCollateral(pindexBest->nHeight)*COIN);
+                    found = !(fMasterNode && IsMNCollateralValid(pcoin->vout[i].nValue, pindexBest->nHeight));
                 } else if (coin_type == ONLY_NONDENOMINATED_NOT10000IFMN){
                     if (IsCollateralAmount(pcoin->vout[i].nValue)) continue; // do not use collateral amounts
                     found = !IsDenominatedAmount(pcoin->vout[i].nValue);
-                    if(found && fMasterNode) found = pcoin->vout[i].nValue != GetMNCollateral(pindexBest->nHeight)*COIN; // do not use Hot MN funds
+                    if(found && fMasterNode) found = !IsMNCollateralValid(pcoin->vout[i].nValue, pindexBest->nHeight); // do not use Hot MN funds
                 } else {
                     found = true;
                 }
@@ -1752,7 +1752,7 @@ void CWallet::AvailableCoinsForStaking(vector<COutput>& vCoins, unsigned int nSp
                     found = true;
                     break;
                 }
-                if (pcoin->vout[i].nValue == GetMNCollateral(pindexBest->nHeight)*COIN){
+                if (IsMNCollateralValid(pcoin->vout[i].nValue, pindexBest->nHeight)){
 
                     //LogPrintf("CWallet::AvailableCoinsForStaking - Found Masternode collateral.\n");
                     found = true;
@@ -2169,7 +2169,7 @@ bool CWallet::SelectCoinsDark(CAmount nValueMin, CAmount nValueMax, std::vector<
         if(out.tx->vout[out.i].nValue < CENT) continue;
         //do not allow collaterals to be selected
         if(IsCollateralAmount(out.tx->vout[out.i].nValue)) continue;
-        if(fMasterNode && out.tx->vout[out.i].nValue == GetMNCollateral(pindexBest->nHeight)*COIN) continue; //masternode input
+        if(fMasterNode && IsMNCollateralValid(out.tx->vout[out.i].nValue, pindexBest->nHeight)) continue; //masternode input
 
         if(nValueRet + out.tx->vout[out.i].nValue <= nValueMax){
             CTxIn vin = CTxIn(out.tx->GetHash(),out.i);
@@ -3484,18 +3484,22 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     }
 
     // Calculate coin age reward
-    int64_t nReward;
+    int64_t nReward = 0;
     {
         uint64_t nCoinAge;
         CTxDB txdb("r");
         if (!txNew.GetCoinAge(txdb, pindexPrev, nCoinAge))
             return error("CreateCoinStake : failed to calculate coin age");
 
-        nReward = GetProofOfStakeReward(pindexPrev, nCoinAge, nFees);
-        if (nReward <= 0)
-            return false;
+        // Up to block TIERED_MASTERNODES_START_BLOCK we continue doing the same
+        if (pindexPrev->nHeight+1 < TIERED_MASTERNODES_START_BLOCK) {
+            nReward = GetProofOfStakeReward(pindexPrev, nCoinAge, nFees);
+            if (nReward <= 0)
+                return false;
 
-        nCredit += nReward;
+            nCredit += nReward;
+        }
+
     }
 
     // Masternode Payments
@@ -3517,18 +3521,25 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     CScript payeerewardaddress = CScript();
     int payeerewardpercent = 0;
     CTxIn vin;
+    int tier = 0;
     bool hasPayment = true;
     if(bMasterNodePayment) {
         //spork
         if(!masternodePayments.GetBlockPayee(pindexPrev->nHeight+1, payee, vin)){
-            CMasternode* winningNode = mnodeman.GetCurrentMasterNode(1);
+            CMasternode* winningNode = mnodeman.GetCurrentMasterNode(1, pindexBest->nHeight);
             if(winningNode){
                 payee = GetScriptForDestination(winningNode->pubkey.GetID());
                 payeerewardaddress = winningNode->rewardAddress;
                 payeerewardpercent = winningNode->rewardPercentage;
+                tier = winningNode->tier;
             } else {
-                return error("CreateCoinStake: Failed to detect masternode to pay\n");
+                LogPrintf("CreateCoinStake: Failed to detect masternode to pay\n");
             }
+        }
+        else {
+            // Only used after block TIERED_MASTERNODES_START_BLOCK
+            CMasternode* winningNode = mnodeman.Find(vin);
+            tier = winningNode->tier;
         }
     }
     // If reward percent is 0 then send all to masternode address
@@ -3545,7 +3556,6 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
 
         LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
     }
-
     // If reward percent is 100 then send all to reward address
     if(hasPayment && payeerewardpercent == 100){
         payments = txNew.vout.size() + 1;
@@ -3560,7 +3570,6 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
 
         LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
     }
-
     // If reward percent more than 0 and lower than 100 then split reward
     if(hasPayment && payeerewardpercent > 0 && payeerewardpercent < 100){
         payments = txNew.vout.size() + 2;
@@ -3582,9 +3591,30 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
 
         LogPrintf("Masternode payment to %s\n", address2.ToString().c_str());
     }
-    
+    int64_t masternodePayment;
+
+    // after block TIERED_MASTERNODES_START_BLOCK we start with the tiered masternodes logic
+    if (pindexPrev->nHeight+1 >= TIERED_MASTERNODES_START_BLOCK) {
+        if (tier != 0) {
+            masternodePayment = masternodeTierRewards[tier]*COIN + (int64_t) (nFees * ((double)masternodeTierRewards[tier]/(POS_REWARD_TIERED_MN+masternodeTierRewards[tier])));
+        }
+        else {
+            masternodePayment = 0;
+        }
+
+        nCredit += POS_REWARD_TIERED_MN*COIN + nFees;
+        LogPrintf("nCredit pos: %i\n", nCredit);
+        if (tier != 0) {
+            nCredit += masternodeTierRewards[tier]*COIN;
+            LogPrintf("nCredit mn: %i\n", nCredit);
+        }
+    }
+    else {
+        masternodePayment = GetMasternodePayment(pindexPrev->nHeight+1, nReward);
+    }
+
     int64_t blockValue = nCredit;
-    int64_t masternodePayment = GetMasternodePayment(pindexPrev->nHeight+1, nReward);
+
 
     // Set output amount
     if(hasPayment && txNew.vout.size() == 4 && (payeerewardpercent == 0 || payeerewardpercent == 100)) // 2 stake outputs, stake was split, plus a masternode payment, no reward split

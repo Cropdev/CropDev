@@ -116,6 +116,11 @@ public:
     CMasternode* Find(const CTxIn& vin);
     CMasternode* Find(const CPubKey& pubKeyMasternode);
 
+    // Track masternode payments
+    void RecordMasternodePayment(CScript payee, int64_t nBlockTime, int minProtocol);
+
+    int64_t GetAverageRewardTime(int minProtocol);
+
     //Find an entry thta do not match every entry provided vector
     CMasternode* FindOldestNotInVec(const std::vector<CTxIn> &vVins, int nMinimumAge);
 

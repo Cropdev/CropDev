@@ -13,7 +13,7 @@
 #include "base58.h"
 #include "main.h"
 #include "script.h"
-#include "masternode.h"
+#include "boost/assign.hpp"
 
 class uint256;
 
@@ -34,7 +34,10 @@ class uint256;
 #define MASTERNODE_EXPIRATION_SECONDS          (65*60)
 #define MASTERNODE_REMOVAL_SECONDS             (70*60)
 
+#define TIERED_MASTERNODES_START_BLOCK         59000// tiered mns 1st block
+
 using namespace std;
+using namespace boost::assign;
 
 class CMasternode;
 
@@ -42,6 +45,13 @@ extern CCriticalSection cs_masternodes;
 extern map<int64_t, uint256> mapCacheBlockHashes;
 
 bool GetBlockHash(uint256& hash, int nBlockHeight);
+
+typedef std::map<int, int> intMap;
+// Masternode tiers
+static std::map<int, int> masternodeTiers = map_list_of (1, 2500) (2, 5000) (3, 10000) (4, 20000); // 2500 - 5000 - 10000 - 20000
+
+// Masternode tier rewards
+static std::map<int, int> masternodeTierRewards = map_list_of (1, 25) (2, 60) (3, 140) (4, 300); // 25 - 60 - 140 - 300
 
 //
 // The Masternode Class. For managing the darksend process. It contains the input of the 1000 CROP, signature to prove
@@ -85,6 +95,8 @@ public:
     int nLastScanningErrorBlockHeight;
     int64_t nLastPaid;
     bool isPortOpen;
+    int tier;
+    unsigned int score;
 
     CMasternode();
     CMasternode(const CMasternode& other);
@@ -121,6 +133,8 @@ public:
         swap(first.nLastScanningErrorBlockHeight, second.nLastScanningErrorBlockHeight);
         swap(first.nLastPaid, second.nLastPaid);
         swap(first.isPortOpen, second.isPortOpen);
+        swap(first.tier, second.tier);
+        swap(first.score, second.score);
     }
 
     CMasternode& operator=(CMasternode from)
@@ -135,6 +149,14 @@ public:
     friend bool operator!=(const CMasternode& a, const CMasternode& b)
     {
         return !(a.vin == b.vin);
+    }
+    friend bool operator<(const CMasternode& a, const CMasternode&b)
+    {
+        return a.score < b.score;
+    }
+    friend bool operator>(const CMasternode& a, const CMasternode&b)
+    {
+        return a.score > b.score;
     }
 
     uint256 CalculateScore(int mod=1, int64_t nBlockHeight=0);
@@ -177,6 +199,10 @@ public:
     int64_t SecondsSincePayment()
     {
         return (GetAdjustedTime() - nLastPaid);
+    }
+
+    void UpdateTier(int newTier) {
+        tier = newTier;
     }
 
     void UpdateLastSeen(int64_t override=0)

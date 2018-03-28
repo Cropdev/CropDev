@@ -90,6 +90,7 @@ CMasternode::CMasternode()
     //mark last paid as current for new entries
     nLastPaid = GetAdjustedTime();
     isPortOpen = true;
+    tier = 0;
 }
 
 CMasternode::CMasternode(const CMasternode& other)
@@ -117,8 +118,9 @@ CMasternode::CMasternode(const CMasternode& other)
     nScanningErrorCount = other.nScanningErrorCount;
     nLastScanningErrorBlockHeight = other.nLastScanningErrorBlockHeight;
     nLastPaid = other.nLastPaid;
-    nLastPaid = GetAdjustedTime();
     isPortOpen = other.isPortOpen;
+    tier = other.tier;
+    score = other.score;
 }
 
 CMasternode::CMasternode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std::vector<unsigned char> newSig, int64_t newSigTime, CPubKey newPubkey2, int protocolVersionIn, CScript newRewardAddress, int newRewardPercentage)
@@ -146,6 +148,10 @@ CMasternode::CMasternode(CService newAddr, CTxIn newVin, CPubKey newPubkey, std:
     nScanningErrorCount = 0;
     nLastScanningErrorBlockHeight = 0;
     isPortOpen = true;
+    tier = 1;
+    score = 0;
+    // On new additions set last paid to now
+    nLastPaid = GetAdjustedTime();
 }
 
 //
@@ -192,14 +198,45 @@ void CMasternode::Check()
         return;
     }
 
-    if(!unitTest){
-        CValidationState state;
-        CTransaction tx = CTransaction();
-        CTxOut vout = CTxOut((GetMNCollateral(pindexBest->nHeight)-1)*COIN, darkSendPool.collateralPubKey);
-        tx.vin.push_back(vin);
-        tx.vout.push_back(vout);
+    bool fAcceptable = false;
 
-	if(!AcceptableInputs(mempool, tx, false, NULL)){
+    if(!unitTest) {
+        CTransaction tx = CTransaction();
+        if (tier == 0) {
+            BOOST_FOREACH(PAIRTYPE(const int, int) & mntier, masternodeTiers)
+            {
+                if (!fAcceptable) {
+                    CTxOut vout = CTxOut((GetMNCollateral(pindexBest->nHeight, mntier.first)) * COIN,
+                                         darkSendPool.collateralPubKey);
+                    tx.vin.push_back(vin);
+                    tx.vout.push_back(vout);
+                    {
+                        TRY_LOCK(cs_main, lockMain);
+                        if (!lockMain) return;
+                        fAcceptable = AcceptableInputs(mempool, tx, false, NULL);
+                        if (fAcceptable) { // Update mn tier on our records
+                            tier = (mntier.first);
+                        }
+                        else {
+                            tx.vin.pop_back();
+                            tx.vout.pop_back();
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            CTxOut vout = CTxOut((GetMNCollateral(pindexBest->nHeight, tier)) * COIN,
+                                 darkSendPool.collateralPubKey);
+            tx.vin.push_back(vin);
+            tx.vout.push_back(vout);
+            {
+                TRY_LOCK(cs_main, lockMain);
+                if (!lockMain) return;
+                fAcceptable = AcceptableInputs(mempool, tx, false, NULL);
+            }
+        }
+        if (!fAcceptable) {
             activeState = MASTERNODE_VIN_SPENT;
             return;
         }
