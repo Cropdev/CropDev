@@ -3522,11 +3522,12 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
     int payeerewardpercent = 0;
     CTxIn vin;
     int tier = 0;
+    CMasternode* winningNode = NULL;
     bool hasPayment = true;
     if(bMasterNodePayment) {
         //spork
         if(!masternodePayments.GetBlockPayee(pindexPrev->nHeight+1, payee, vin)){
-            CMasternode* winningNode = mnodeman.GetCurrentMasterNode(1, pindexBest->nHeight);
+            winningNode = mnodeman.GetCurrentMasterNode(1, pindexBest->nHeight);
             if(winningNode){
                 payee = GetScriptForDestination(winningNode->pubkey.GetID());
                 payeerewardaddress = winningNode->rewardAddress;
@@ -3538,7 +3539,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         }
         else {
             // Only used after block TIERED_MASTERNODES_START_BLOCK
-            CMasternode* winningNode = mnodeman.Find(vin);
+            winningNode = mnodeman.Find(vin);
             tier = winningNode->tier;
         }
     }

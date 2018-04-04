@@ -201,11 +201,15 @@ void CMasternode::Check()
     bool fAcceptable = false;
 
     if(!unitTest) {
+        uint256 hashBlock = 0;
         CTransaction tx = CTransaction();
-        if (tier == 0) {
+        GetTransaction(vin.prevout.hash, tx, hashBlock);
+        int64_t checkValue = tx.vout[vin.prevout.n].nValue;
+        if (tier >= 0) {
             BOOST_FOREACH(PAIRTYPE(const int, int) & mntier, masternodeTiers)
             {
-                if (!fAcceptable) {
+                if (!fAcceptable && (mntier.second*COIN) == checkValue) {
+                    CTransaction tx = CTransaction();
                     CTxOut vout = CTxOut((GetMNCollateral(pindexBest->nHeight, mntier.first)) * COIN,
                                          darkSendPool.collateralPubKey);
                     tx.vin.push_back(vin);
@@ -225,17 +229,7 @@ void CMasternode::Check()
                 }
             }
         }
-        else {
-            CTxOut vout = CTxOut((GetMNCollateral(pindexBest->nHeight, tier)) * COIN,
-                                 darkSendPool.collateralPubKey);
-            tx.vin.push_back(vin);
-            tx.vout.push_back(vout);
-            {
-                TRY_LOCK(cs_main, lockMain);
-                if (!lockMain) return;
-                fAcceptable = AcceptableInputs(mempool, tx, false, NULL);
-            }
-        }
+
         if (!fAcceptable) {
             activeState = MASTERNODE_VIN_SPENT;
             return;

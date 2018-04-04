@@ -545,7 +545,6 @@ CMasternode* CMasternodeMan::GetCurrentMasterNode(int mod, int64_t nBlockHeight,
     int64_t wLastPaid = winner->nLastPaid;
 
     for(std::vector<CMasternode>::size_type i = 0; i != winningArea.size(); i++) {
-        LogPrintf("Winner Vector: %i - %i\n", winningArea[i].score, winningArea[i].nLastPaid);
         if (now - winningArea[i].nLastPaid > avgRewardTime) {
             if (winningArea[i].nLastPaid < wLastPaid) {
                 winner = &(winningArea[i]);
@@ -553,8 +552,11 @@ CMasternode* CMasternodeMan::GetCurrentMasterNode(int mod, int64_t nBlockHeight,
             }
         }
     }
-
-    LogPrintf("Winner MN: %i - %i\n", winner->score, winner->nLastPaid);
+    BOOST_FOREACH(CMasternode& mn, vMasternodes) {
+        if (mn.vin == winner->vin) {
+            return &mn;
+        }
+                }
     return winner;
 }
 
@@ -812,13 +814,16 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
 
         bool fAcceptable = false;
 
+        uint256 hashBlock = 0;
         CTransaction tx = CTransaction();
+        GetTransaction(vin.prevout.hash, tx, hashBlock);
+        int64_t checkValue = tx.vout[vin.prevout.n].nValue;
         int newMNTier = 0;
-        if (pmn==NULL || pmn->tier == 0) {
+        if (pmn==NULL || pmn->tier >= 0) {
             BOOST_FOREACH(PAIRTYPE(const int, int) & mntier, masternodeTiers)
             {
-                if (!fAcceptable) {
-                    //LogPrintf("MasternodeMan: Looking for acceptable inputs for tier %i\n",mntier.first);
+                if (!fAcceptable && (mntier.second*COIN) == checkValue) {
+                    CTransaction tx = CTransaction();
                     CTxOut vout = CTxOut((GetMNCollateral(pindexBest->nHeight, mntier.first)) * COIN,
                                          darkSendPool.collateralPubKey);
                     tx.vin.push_back(vin);
@@ -829,7 +834,6 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
                         fAcceptable = AcceptableInputs(mempool, tx, false, NULL);
                         if (fAcceptable) { // Update mn tier on our records
                             if (pmn != NULL) {
-                                LogPrintf("MasternodeMan: Changing masternode tier\n");
                                 pmn->UpdateTier(mntier.first);
                             }
                             else {
@@ -845,7 +849,6 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
             }
         }
         else {
-            LogPrintf("dsee - ProcessMessage 17\n");
             CTxOut vout = CTxOut((GetMNCollateral(pindexBest->nHeight, pmn->tier)) * COIN,
                                  darkSendPool.collateralPubKey);
             tx.vin.push_back(vin);
