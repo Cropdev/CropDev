@@ -48,12 +48,14 @@ MasternodeManager::MasternodeManager(QWidget *parent) :
     int columnStatusWidth = 80;
     int columnActiveWidth = 130;
     int columnLastSeenWidth = 130;
+    int columnTierWidth = 60;
     
     ui->tableWidgetMasternodes->setColumnWidth(0, columnAddressWidth);
     ui->tableWidgetMasternodes->setColumnWidth(1, columnProtocolWidth);
     ui->tableWidgetMasternodes->setColumnWidth(2, columnStatusWidth);
-    ui->tableWidgetMasternodes->setColumnWidth(3, columnActiveWidth);
-    ui->tableWidgetMasternodes->setColumnWidth(4, columnLastSeenWidth);
+    ui->tableWidgetMasternodes->setColumnWidth(3, columnTierWidth);
+    ui->tableWidgetMasternodes->setColumnWidth(4, columnActiveWidth);
+    ui->tableWidgetMasternodes->setColumnWidth(5, columnLastSeenWidth);
     
     ui->tableWidgetMasternodes->setContextMenuPolicy(Qt::CustomContextMenu);
     QAction *copyAddressAction = new QAction(tr("Copy Address"), this);
@@ -159,6 +161,7 @@ void MasternodeManager::updateNodeList()
         // Address, Protocol, Status, Active Seconds, Last Seen, Pub Key
         QTableWidgetItem* addressItem = new QTableWidgetItem(QString::fromStdString(mn.addr.ToString()));
         QTableWidgetItem* protocolItem = new QTableWidgetItem(QString::number(mn.protocolVersion));
+        QTableWidgetItem* tierItem = new QTableWidgetItem(QString::number(mn.tier));
         QTableWidgetItem* statusItem = new QTableWidgetItem(QString::number(mn.IsEnabled()));
         QTableWidgetItem* activeSecondsItem = new QTableWidgetItem(seconds_to_DHMS((qint64)(mn.lastTimeSeen - mn.sigTime)));
         QTableWidgetItem* lastSeenItem = new QTableWidgetItem(QString::fromStdString(DateTimeStrFormat(mn.lastTimeSeen)));
@@ -174,9 +177,11 @@ void MasternodeManager::updateNodeList()
         ui->tableWidgetMasternodes->setItem(0, 0, addressItem);
         ui->tableWidgetMasternodes->setItem(0, 1, protocolItem);
         ui->tableWidgetMasternodes->setItem(0, 2, statusItem);
-        ui->tableWidgetMasternodes->setItem(0, 3, activeSecondsItem);
-        ui->tableWidgetMasternodes->setItem(0, 4, lastSeenItem);
-        ui->tableWidgetMasternodes->setItem(0, 5, pubkeyItem);
+        ui->tableWidgetMasternodes->setItem(0, 3, tierItem);
+        ui->tableWidgetMasternodes->setItem(0, 4, activeSecondsItem);
+        ui->tableWidgetMasternodes->setItem(0, 5, lastSeenItem);
+        ui->tableWidgetMasternodes->setItem(0, 6, pubkeyItem);
+        
     }
 
     ui->countLabel->setText(QString::number(ui->tableWidgetMasternodes->rowCount()));

@@ -75,6 +75,11 @@
            </column>
            <column>
             <property name="text">
+             <string>Tier</string>
+            </property>
+           </column>           
+           <column>
+            <property name="text">
              <string>Active (secs)</string>
             </property>
            </column>
