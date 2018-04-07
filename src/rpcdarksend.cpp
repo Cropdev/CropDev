@@ -769,7 +769,7 @@ Value masternodelist(const Array& params, bool fHelp)
                 "\nAvailable modes:\n"
                 "  activeseconds  - Print number of seconds masternode recognized by the network as enabled\n"
                 "  reward         - Show reward settings\n"
-                "  full           - Print info in format 'status protocol pubkey vin lastseen activeseconds' (can be additionally filtered, partial match)\n"
+                "  full           - Print info in format 'status protocol pubkey ip:port tier lastseen activeseconds lastpaidtime' (can be additionally filtered, partial match)\n"
                 "  lastseen       - Print timestamp of when a masternode was last seen on the network\n"
                 "  protocol       - Print protocol of a masternode (can be additionally filtered, exact match)\n"
                 "  pubkey         - Print public key associated with a masternode (can be additionally filtered, partial match)\n"
@@ -828,6 +828,7 @@ Value masternodelist(const Array& params, bool fHelp)
                                mn.protocolVersion << " " <<
                                address2.ToString() << " " <<
                                mn.addr.ToString() << " " <<
+                               mn.tier << " " <<
                                mn.lastTimeSeen << " " << setw(8) <<
                                (mn.lastTimeSeen - mn.sigTime) << " " <<
                                mn.nLastPaid;
