@@ -113,9 +113,16 @@ struct CMainSignals {
 bool IsMNCollateralValid(int64_t value, int nHeight) {
     if (nHeight < TIERED_MASTERNODES_START_BLOCK) {
         return value == 5000*COIN;
-    } else {
+    } else if (nHeight < 157000) {
     // Using BOOST_FOREACH for concistency with the rest of the code, everything should be using a plain for from c++ 11 or 17
     BOOST_FOREACH(PAIRTYPE(const int, int)& mntier, masternodeTiers)
+        {
+            if (value == (mntier.second)*COIN)
+            return true;
+        }
+    } else {
+    // Using BOOST_FOREACH for concistency with the rest of the code, everything should be using a plain for from c++ 11 or 17
+    BOOST_FOREACH(PAIRTYPE(const int, int)& mntier, masternodeTiers157000)
         {
             if (value == (mntier.second)*COIN)
             return true;
@@ -127,8 +134,10 @@ bool IsMNCollateralValid(int64_t value, int nHeight) {
 int64_t GetMNCollateral(int nHeight, int tier) {
     if (nHeight < TIERED_MASTERNODES_START_BLOCK) {
         return 5000;
-    } else {
+    } else if (nHeight < 157000) {
         return masternodeTiers[tier];
+    } else {
+        return masternodeTiers157000[tier];
     }
 }
 
@@ -1400,9 +1409,33 @@ bool IsPOSRewardValid(int64_t value, int64_t nFees) {
         if (nHeight < TIERED_MASTERNODES_START_BLOCK) {
             return value == (120*COIN + nFees);
         }
-        else {
+        else if (nHeight < 157000 ) {
             // Using BOOST_FOREACH for concistency with the rest of the code
             BOOST_FOREACH(PAIRTYPE(const int, int)& tier, masternodeTierRewards)
+            {
+                if (value == (tier.second*COIN + POS_REWARD_TIERED_MN*COIN + nFees))
+                    return true;
+            }
+            // The case of a wallet staking with no mns up
+            if (value ==  POS_REWARD_TIERED_MN*COIN + nFees) {
+                return true;
+            }
+        }
+        else if (nHeight < 242600) {
+            // Using BOOST_FOREACH for concistency with the rest of the code
+            BOOST_FOREACH(PAIRTYPE(const int, int)& tier, masternodeTierRewards157000)
+            {
+                if (value == (tier.second*COIN + POS_REWARD_TIERED_MN*COIN + nFees))
+                    return true;
+            }
+            // The case of a wallet staking with no mns up
+            if (value ==  POS_REWARD_TIERED_MN*COIN + nFees) {
+                return true;
+            }
+        }
+        else {
+            // Using BOOST_FOREACH for concistency with the rest of the code
+            BOOST_FOREACH(PAIRTYPE(const int, int)& tier, masternodeTierRewards242600)
             {
                 if (value == (tier.second*COIN + POS_REWARD_TIERED_MN*COIN + nFees))
                     return true;
