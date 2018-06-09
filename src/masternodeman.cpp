@@ -848,7 +848,7 @@ void CMasternodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
                 }
             }
         } else if (pmn==NULL || pmn->tier >= 0) {
-            BOOST_FOREACH(PAIRTYPE(const int, int) & mntier, masternodeTiers)
+            BOOST_FOREACH(PAIRTYPE(const int, int) & mntier, masternodeTiers157000)
             {
                 if (!fAcceptable && (mntier.second*COIN) == checkValue) {
                     CTransaction tx = CTransaction();
