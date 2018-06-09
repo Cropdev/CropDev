@@ -3611,7 +3611,12 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
         nCredit += POS_REWARD_TIERED_MN*COIN + nFees;
         LogPrintf("nCredit pos: %i\n", nCredit);
         if (tier != 0) {
-            nCredit += masternodeTierRewards[tier]*COIN;
+            if (pindexPrev->nHeight+1 < 157000)
+                nCredit += masternodeTierRewards[tier]*COIN;
+            else if (pindexPrev->nHeight+1 < 242600)
+                nCredit += masternodeTierRewards157000[tier]*COIN;
+            else
+                nCredit += masternodeTierRewards242600[tier]*COIN;
             LogPrintf("nCredit mn: %i\n", nCredit);
         }
     }
