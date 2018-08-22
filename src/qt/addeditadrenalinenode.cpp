@@ -28,7 +28,7 @@ AddEditAdrenalineNode::AddEditAdrenalineNode(QWidget *parent) :
     ui->aliasLineEdit->setPlaceholderText("Enter your Masternode alias");
     ui->addressLineEdit->setPlaceholderText("Enter your IP & port");
     ui->privkeyLineEdit->setPlaceholderText("Enter your Masternode private key");
-    ui->txhashLineEdit->setPlaceholderText("Enter your 1000 CROP TXID");
+    ui->txhashLineEdit->setPlaceholderText("Enter your 5000 CROP TXID");
     ui->outputindexLineEdit->setPlaceholderText("Enter your transaction output index");
     ui->rewardaddressLineEdit->setPlaceholderText("Enter a reward recive address");
     ui->rewardpercentageLineEdit->setPlaceholderText("Input the % for the reward");
@@ -66,7 +66,7 @@ void AddEditAdrenalineNode::on_okButton_clicked()
     else if(ui->txhashLineEdit->text() == "")
     {
         QMessageBox msg;
-        msg.setText("Please enter the transaction hash for the transaction that has 500 coins");
+        msg.setText("Please enter the transaction hash for the transaction that has 5000 coins");
         msg.exec();
         return;
     }
