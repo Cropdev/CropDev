@@ -120,9 +120,16 @@ bool IsMNCollateralValid(int64_t value, int nHeight) {
             if (value == (mntier.second)*COIN)
             return true;
         }
-    } else {
+    } else if (nHeight < TIER_SWITCH) {
     // Using BOOST_FOREACH for concistency with the rest of the code, everything should be using a plain for from c++ 11 or 17
     BOOST_FOREACH(PAIRTYPE(const int, int)& mntier, masternodeTiers157000)
+        {
+            if (value == (mntier.second)*COIN)
+            return true;
+        }
+    } else { 
+    // Using BOOST_FOREACH for concistency with the rest of the code, everything should be using a plain for from c++ 11 or 17
+    BOOST_FOREACH(PAIRTYPE(const int, int)& mntier, masternodeTiersLast)
         {
             if (value == (mntier.second)*COIN)
             return true;
@@ -136,8 +143,10 @@ int64_t GetMNCollateral(int nHeight, int tier) {
         return 5000;
     } else if (nHeight < 157000) {
         return masternodeTiers[tier];
-    } else {
+    } else if (nHeight < TIER_SWITCH) {
         return masternodeTiers157000[tier];
+    } else {
+        return masternodeTiersLast[tier];
     }
 }
 
@@ -1433,9 +1442,21 @@ bool IsPOSRewardValid(int64_t value, int64_t nFees) {
                 return true;
             }
         }
-        else {
+        else if (nHeight < TIER_SWITCH) {
             // Using BOOST_FOREACH for concistency with the rest of the code
             BOOST_FOREACH(PAIRTYPE(const int, int)& tier, masternodeTierRewards242600)
+            {
+                if (value == (tier.second*COIN + POS_REWARD_TIERED_MN*COIN + nFees))
+                    return true;
+            }
+            // The case of a wallet staking with no mns up
+            if (value ==  POS_REWARD_TIERED_MN*COIN + nFees) {
+                return true;
+            }
+        }
+        else {
+            // Using BOOST_FOREACH for concistency with the rest of the code
+            BOOST_FOREACH(PAIRTYPE(const int, int)& tier, masternodeTierRewardsLast)
             {
                 if (value == (tier.second*COIN + POS_REWARD_TIERED_MN*COIN + nFees))
                     return true;

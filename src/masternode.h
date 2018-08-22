@@ -50,11 +50,13 @@ typedef std::map<int, int> intMap;
 // Masternode tiers
 static std::map<int, int> masternodeTiers = map_list_of (1, 2500) (2, 5000) (3, 10000) (4, 20000); // 2500 - 5000 - 10000 - 20000
 static std::map<int, int> masternodeTiers157000 = map_list_of (1, 10000) (2, 20000) (3, 30000); // 10000 - 20000 - 30000
+static std::map<int, int> masternodeTiersLast = map_list_of (1, 10000); // 10000
 
 // Masternode tier rewards
 static std::map<int, int> masternodeTierRewards = map_list_of (1, 25) (2, 60) (3, 140) (4, 300); // 25 - 60 - 140 - 300
 static std::map<int, int> masternodeTierRewards157000 = map_list_of (1, 100) (2, 210) (3, 300); // 100 - 210 - 300
 static std::map<int, int> masternodeTierRewards242600 = map_list_of (1, 50) (2, 105) (3, 150); // 50 - 105 - 150
+static std::map<int, int> masternodeTierRewardsLast = map_list_of (1, 10); // 50 - 105 - 150
 
 //
 // The Masternode Class. For managing the darksend process. It contains the input of the 1000 CROP, signature to prove

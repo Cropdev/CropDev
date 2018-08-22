@@ -3601,9 +3601,11 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
                 masternodePayment = masternodeTierRewards[tier]*COIN + (int64_t) (nFees * ((double)masternodeTierRewards[tier]/(POS_REWARD_TIERED_MN+masternodeTierRewards[tier])));
             else if (pindexPrev->nHeight+1 < 242600)
                 masternodePayment = masternodeTierRewards157000[tier]*COIN + (int64_t) (nFees * ((double)masternodeTierRewards157000[tier]/(POS_REWARD_TIERED_MN+masternodeTierRewards157000[tier])));
-            else
+            else if (pindexPrev->nHeight+1 < TIER_SWITCH)
                 masternodePayment = masternodeTierRewards242600[tier]*COIN + (int64_t) (nFees * ((double)masternodeTierRewards242600[tier]/(POS_REWARD_TIERED_MN+masternodeTierRewards242600[tier])));
-        }
+            else 
+                masternodePayment = masternodeTierRewardsLast[tier]*COIN + (int64_t) (nFees * ((double)masternodeTierRewardsLast[tier]/(POS_REWARD_TIERED_MN+masternodeTierRewardsLast[tier])));
+            }
         else {
             masternodePayment = 0;
         }
@@ -3615,8 +3617,10 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, int
                 nCredit += masternodeTierRewards[tier]*COIN;
             else if (pindexPrev->nHeight+1 < 242600)
                 nCredit += masternodeTierRewards157000[tier]*COIN;
-            else
+            else if (pindexPrev->nHeight+1 < TIER_SWITCH)
                 nCredit += masternodeTierRewards242600[tier]*COIN;
+            else
+                nCredit += masternodeTierRewardsLast[tier]*COIN;
             LogPrintf("nCredit mn: %i\n", nCredit);
         }
     }

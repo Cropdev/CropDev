@@ -27,6 +27,7 @@ static const int64_t STATIC_POS_REWARD = 25 * COIN;
 static const int64_t TARGET_SPACING = 120;
 static const int64_t TARGET_SPACING_NEW = 60;
 static const int64_t FORK_TIME = 1521104400;  //March 15th, 2018
+static const int64_t TIER_SWITCH = 268500; 
 
 
 #define INSTANTX_SIGNATURES_REQUIRED           10
